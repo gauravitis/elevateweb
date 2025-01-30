@@ -1,11 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Rocket, Lightbulb, TrendingUp } from "lucide-react";
-import { useEffect } from "react";
+import { Rocket, Lightbulb, TrendingUp, Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 import { BeforeAfterSlider } from './components/BeforeAfterSlider';
+import { MainMenu } from './components/MainMenu';
 
 export default function Home() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   useEffect(() => {
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach(entry => {
@@ -44,12 +47,20 @@ export default function Home() {
       <div className="absolute bottom-4 right-4 text-4xl animate-pulse">🤘</div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-black/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="text-2xl font-bold gradient-text">ElevateWeb</div>
-          <button className="text-sm uppercase tracking-wider">Menu</button>
+          <button 
+            onClick={() => setIsMenuOpen(true)}
+            className="flex items-center gap-2 text-sm uppercase tracking-wider hover:text-purple-400 transition-colors"
+          >
+            <span>Menu</span>
+            <Menu className="w-5 h-5" />
+          </button>
         </div>
       </nav>
+
+      <MainMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       {/* Hero Section */}
       <div className="flex items-center justify-center min-h-screen px-6">
