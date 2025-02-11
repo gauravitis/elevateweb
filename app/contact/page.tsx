@@ -2,27 +2,112 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, Phone, Mail, Calendar, Clock, MapPin, ArrowRight, Check } from 'lucide-react';
+import { Menu, Phone, Mail, Calendar, Clock, MapPin, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { MainMenu } from '../components/MainMenu';
 import Link from 'next/link';
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function ContactPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDecisionMaker, setIsDecisionMaker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     projectDetails: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Name is required",
+        description: "Please enter your name",
+      });
+      return false;
+    }
+
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+      });
+      return false;
+    }
+
+    if (!formData.projectDetails.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Project details required",
+        description: "Please tell us about your project",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Form submitted:', formData);
+    
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('projectDetails', formData.projectDetails);
+      formDataToSend.append('isDecisionMaker', isDecisionMaker.toString());
+
+      const response = await fetch(
+        'https://getform.io/f/awnqgmpb',
+        {
+          method: 'POST',
+          body: formDataToSend,
+          headers: {
+            'Accept': 'application/json',
+            'Email-To': 'hello.elevateweb@gmail.com',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+      
+      // Show success message
+      toast({
+        title: "Message sent successfully!",
+        description: "We'll get back to you within 4 hours.",
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        projectDetails: '',
+      });
+      setIsDecisionMaker(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to send message",
+        description: "Please try again or use alternative contact methods.",
+      });
+      console.error('Form submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-black text-white">
+      <Toaster />
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-black/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -125,9 +210,17 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+                  disabled={isSubmitting}
+                  className="w-full px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
                 >
-                  Send Message
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Message'
+                  )}
                 </button>
               </form>
             </div>
